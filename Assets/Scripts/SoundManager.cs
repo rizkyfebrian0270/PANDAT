@@ -5,33 +5,51 @@ public class SoundManager : MonoBehaviour
 {
     [SerializeField] private Slider volumeSlider;
 
-    private void Start()
+    private static SoundManager instance;
+
+    private void Awake()
     {
-        // Cek referensi
-        if (volumeSlider == null)
+        // Cegah duplikat saat pindah scene
+        if (instance != null && instance != this)
         {
-            Debug.LogError("Slider belum di-assign di inspector!");
+            Destroy(gameObject);
             return;
         }
 
-        // Jika belum ada setting volume, set default
-        if (!PlayerPrefs.HasKey("musicVolume"))
-        {
-            PlayerPrefs.SetFloat("musicVolume", 1f);
-        }
-
-        // Load nilai dan langsung terapkan ke volume
-        float savedVolume = PlayerPrefs.GetFloat("musicVolume");
-        volumeSlider.value = savedVolume;
-        AudioListener.volume = savedVolume;
-
-        // Tambahkan listener agar update volume saat slider digeser
-        volumeSlider.onValueChanged.AddListener(ChangeVolume);
+        instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    private void ChangeVolume(float value)
+    private void Start()
+    {
+        // Ambil volume dari setting (atau default 1f jika belum ada)
+        float savedVolume = PlayerPrefs.GetFloat("musicVolume", 1f);
+        AudioListener.volume = savedVolume;
+
+        // Jika slider di-assign, sinkronkan tampilannya & event-nya
+        if (volumeSlider != null)
+        {
+            volumeSlider.value = savedVolume;
+            volumeSlider.onValueChanged.AddListener(ChangeVolume);
+        }
+        else
+        {
+            Debug.LogWarning("Volume slider belum di-assign.");
+        }
+    }
+
+    // Dipanggil saat slider digeser
+    public void ChangeVolume(float value)
     {
         AudioListener.volume = value;
         PlayerPrefs.SetFloat("musicVolume", value);
+    }
+
+    // Opsional: agar bisa set slider dari scene lain
+    public void SetVolumeSlider(Slider newSlider)
+    {
+        volumeSlider = newSlider;
+        volumeSlider.value = AudioListener.volume;
+        volumeSlider.onValueChanged.AddListener(ChangeVolume);
     }
 }
