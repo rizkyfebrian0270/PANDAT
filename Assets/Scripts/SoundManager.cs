@@ -7,40 +7,31 @@ public class SoundManager : MonoBehaviour
 
     private void Start()
     {
-        // Pastikan ada referensi ke slider
+        // Cek referensi
         if (volumeSlider == null)
         {
-            Debug.LogError("Volume Slider belum di-assign ke SoundManager!");
+            Debug.LogError("Slider belum di-assign di inspector!");
             return;
         }
 
-        // Set nilai awal dari PlayerPrefs
+        // Jika belum ada setting volume, set default
         if (!PlayerPrefs.HasKey("musicVolume"))
         {
             PlayerPrefs.SetFloat("musicVolume", 1f);
         }
 
-        Load();
+        // Load nilai dan langsung terapkan ke volume
+        float savedVolume = PlayerPrefs.GetFloat("musicVolume");
+        volumeSlider.value = savedVolume;
+        AudioListener.volume = savedVolume;
 
-        // Tambahkan listener agar bisa update saat dislide
-        volumeSlider.onValueChanged.AddListener(delegate { ChangeVolume(); });
+        // Tambahkan listener agar update volume saat slider digeser
+        volumeSlider.onValueChanged.AddListener(ChangeVolume);
     }
 
-    public void ChangeVolume()
+    private void ChangeVolume(float value)
     {
-        AudioListener.volume = volumeSlider.value;
-        Save();
-    }
-
-    private void Load()
-    {
-        float volume = PlayerPrefs.GetFloat("musicVolume");
-        volumeSlider.value = volume;
-        AudioListener.volume = volume;
-    }
-
-    private void Save()
-    {
-        PlayerPrefs.SetFloat("musicVolume", volumeSlider.value);
+        AudioListener.volume = value;
+        PlayerPrefs.SetFloat("musicVolume", value);
     }
 }
